@@ -1,10 +1,93 @@
+// schema.prisma
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url= env("DATABASE_URL")
 }
 
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
 
+  farms Farm[]
+
+  @@map("users")
+}
+
+model Farm {
+  id         String   @id @default(uuid())
+  name       String
+  district   String
+  municipality String?
+  latitude   Float?
+  longitude  Float?
+  sizeInRopani Float?
+  createdAt  DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  crops Crop[]
+
+  @@index([userId])
+  @@map("farms")
+}
+
+model Crop {
+  id                String    @id @default(uuid())
+  cropType          String
+  plantingDate      DateTime?
+  growthStage       String?
+  expectedHarvest   DateTime?
+  cultivationArea   Float?
+  createdAt         DateTime  @default(now())
+
+  farmId String
+  farm   Farm   @relation(fields: [farmId], references: [id], onDelete: Cascade)
+
+  scans Scan[]
+
+  @@index([farmId])
+  @@map("crops")
+}
+
+model Disease {
+  id          String   @id @default(uuid())
+  name        String   @unique          // must match the model's output label exactly
+  cause       String
+  treatment   String
+  prevention  String
+  sourceNote  String?                   // citation for where this info came from
+  createdAt   DateTime @default(now())
+
+  scans Scan[]
+
+  @@map("diseases")
+}
+
+model Scan {
+  id              String   @id @default(uuid())
+  imageUrl        String
+  predictedLabel  String              // raw label returned by the model
+  confidenceScore Float                // 0.0 - 1.0
+  isHealthy       Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  cropId String
+  crop   Crop   @relation(fields: [cropId], references: [id], onDelete: Cascade)
+
+  diseaseId String?
+  disease   Disease? @relation(fields: [diseaseId], references: [id])
+
+  @@index([cropId])
+  @@index([diseaseId])
+  @@index([createdAt])
+  @@map("scans")
+}
