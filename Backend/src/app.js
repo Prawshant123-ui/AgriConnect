@@ -3,7 +3,7 @@ const cors = require("cors");
 const helmet  = require("helmet");
 const morgan  = require("morgan");
 
-const authRoutes = require("./routes/auth.routes");
+const authRoutes = require("./routes/authRoute");
 
 const app = express();
 app.use(helmet());
